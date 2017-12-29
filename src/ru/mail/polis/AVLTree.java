@@ -5,12 +5,14 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.SortedSet;
+import java.util.function.Function;
+
 
 public class AVLTree<E extends Comparable<E>> extends AbstractSet<E> implements BalancedSortedSet<E> {
 
     private final Comparator<E> comparator;
 
-    private BinarySearchTree.Node root; //todo: Создайте новый класс если нужно. Добавьте новые поля, если нужно.
+    public Node root; //todo: Создайте новый класс если нужно. Добавьте новые поля, если нужно.
     private int size;
     //todo: добавьте дополнительные переменные и/или методы если нужно
 
@@ -22,6 +24,22 @@ public class AVLTree<E extends Comparable<E>> extends AbstractSet<E> implements 
         this.comparator = comparator;
     }
 
+
+
+   public int height(Node tmp){
+       return (tmp==null)?  0 : tmp.height;
+   }
+
+   public int balansedValue(Node tmp) {
+       return height(tmp.right) - height(tmp.left);
+   }
+
+   public void fixHeight(Node tmp){
+       int first=tmp.right==null?0:tmp.right.height;
+       int second=tmp.left==null?0:tmp.left.height;
+       tmp.height=1+Math.max(first,second);
+   }
+
     /**
      * Вставляет элемент в дерево.
      * Инвариант: на вход всегда приходит NotNull объект, который имеет корректный тип
@@ -31,10 +49,86 @@ public class AVLTree<E extends Comparable<E>> extends AbstractSet<E> implements 
      */
     @Override
     public boolean add(E value) {
-        //todo: следует реализовать
-        return false;
+
+        if (root == null) {
+            root = new Node(value,null);
+            size++;
+            return true;
+        }
+
+        if(contains(value)){
+            return false;
+        } else {
+
+            Node r=root;
+            boolean insert=false;
+            while(!insert) {
+                if (compare(value, r.value) < 0) {
+                    if (r.left == null) {
+                        r.left = new Node(value,r);
+                        insert=true;
+                    } else {
+                        r = r.left;
+                    }
+                } else {
+                    if (r.right == null) {
+                        r.right = new Node(value,r);
+                        insert=true;
+                    } else {
+                        r = r.right;
+                    }
+                }
+            }
+            while (r.parent!=null){
+                r=balance(r);
+                if(r.parent!=null) {
+                    r = r.parent;
+                }
+            }
+            size++;
+            return true;
+        }
     }
 
+    private Node rotateLeft(Node node) {
+        Node tmp = node.right;
+        node.right=node.left;
+        tmp.left=node;
+        fixHeight(node);
+        fixHeight(tmp);
+        return tmp;
+    }
+
+    private Node rotateRight(Node node) {
+        Node tmp = node.left;
+        node.left=tmp.right;
+        tmp.right=node;
+        fixHeight(node);
+        fixHeight(tmp);
+        return tmp;
+    }
+
+
+    public Node balance(Node node){
+        if(node==null){
+            return null;
+        }
+
+        fixHeight(node);
+        if(balansedValue(node)==2){
+            if(balansedValue(node.right)<0){
+                node.right=rotateRight(node.right);
+            }
+            return rotateLeft(node);
+        }
+        if(balansedValue(node)==-2){
+            if(balansedValue(node.left)>0){
+                node.left=rotateLeft(node.left);
+            }
+            return rotateRight(node);
+        }
+        return node;
+    }
     /**
      * Удаляет элемент с таким же значением из дерева.
      * Инвариант: на вход всегда приходит NotNull объект, который имеет корректный тип
@@ -46,8 +140,41 @@ public class AVLTree<E extends Comparable<E>> extends AbstractSet<E> implements 
     public boolean remove(Object object) {
         @SuppressWarnings("unchecked")
         E value = (E) object;
-        //todo: следует реализовать
-        return false;
+        Node tmp = root;
+        if(!contains(value)){
+            return false;
+        }
+        while (tmp.right.value!=value && tmp.left.value!=value){
+            if(compare(tmp.value,value)<0){
+                tmp=tmp.left;
+            }else {
+                tmp=tmp.right;
+            }
+        }
+        Node left,right;
+        if(compare(tmp.right.value,value)==0) {
+            left = tmp.right.left;
+            right = tmp.right.right;
+        } else  {
+            left = tmp.left.left;
+            right = tmp.left.right;
+        }
+
+        if(right==null){
+            tmp.right=left;
+            size--;
+            balance(tmp);
+            return true;
+        }
+        Node z=right;
+        while (z.left!=null){
+            z=z.left;
+        }
+        z.left=left;
+        tmp.right=right;
+        balance(tmp);
+        size--;
+        return true;
     }
 
     /**
@@ -61,8 +188,29 @@ public class AVLTree<E extends Comparable<E>> extends AbstractSet<E> implements 
     public boolean contains(Object object) {
         @SuppressWarnings("unchecked")
         E value = (E) object;
-        //todo: следует реализовать
-        return false;
+        if(isEmpty()){
+            return false;
+        }
+        Node tmp=root;
+        while(true){
+            if(compare(value,tmp.value)<0){
+                if(tmp.left!=null) {
+                    tmp = tmp.left;
+                } else {
+                    return false;
+                }
+            }
+            if(compare(value,tmp.value)>0){
+                if(tmp.right!=null) {
+                    tmp = tmp.right;
+                } else {
+                    return false;
+                }
+            }
+            if (compare(value,tmp.value)==0){
+                return true;
+            }
+        }
     }
 
     /**
@@ -72,8 +220,14 @@ public class AVLTree<E extends Comparable<E>> extends AbstractSet<E> implements 
      */
     @Override
     public E first() {
-        //todo: следует реализовать
-        throw new NoSuchElementException("first");
+        if (isEmpty()) {
+            throw new NoSuchElementException("first");
+        }
+        Node tmp = root;
+        while (tmp.left != null) {
+            tmp = tmp.left;
+        }
+        return tmp.value;
     }
 
     /**
@@ -83,8 +237,14 @@ public class AVLTree<E extends Comparable<E>> extends AbstractSet<E> implements 
      */
     @Override
     public E last() {
-        //todo: следует реализовать
-        throw new NoSuchElementException("last");
+        if (isEmpty()) {
+            throw new NoSuchElementException("last");
+        }
+        Node tmp = root;
+        while (tmp.right != null) {
+            tmp = tmp.right;
+        }
+        return tmp.value;
     }
 
     private int compare(E v1, E v2) {
@@ -98,7 +258,7 @@ public class AVLTree<E extends Comparable<E>> extends AbstractSet<E> implements 
 
     @Override
     public int size() {
-        return 0;
+        return size;
     }
 
     @Override
@@ -129,6 +289,18 @@ public class AVLTree<E extends Comparable<E>> extends AbstractSet<E> implements 
         throw new UnsupportedOperationException("iterator");
     }
 
+    public void print(Node z){
+
+
+       if(z.left!=null){
+
+           print(z.left);
+       }
+        System.out.print(z.toString());
+       if(z.right!=null){
+           print(z.right);
+       }
+    }
     /**
      * Обходит дерево и проверяет что высоты двух поддеревьев
      * различны по высоте не более чем на 1
@@ -140,7 +312,7 @@ public class AVLTree<E extends Comparable<E>> extends AbstractSet<E> implements 
         traverseTreeAndCheckBalanced(root);
     }
 
-    private int traverseTreeAndCheckBalanced(BinarySearchTree.Node curr) throws NotBalancedTreeException {
+    private int traverseTreeAndCheckBalanced(Node curr) throws NotBalancedTreeException {
         if (curr == null) {
             return 1;
         }
@@ -153,4 +325,41 @@ public class AVLTree<E extends Comparable<E>> extends AbstractSet<E> implements 
         return Math.max(leftHeight, rightHeight) + 1;
     }
 
+    class Node {
+
+        E value;
+        Node left;
+        Node right;
+        int height;
+        Node parent;
+        Node(E value,Node parent) {
+            this.value = value;
+            this.right=null;
+            this.left=null;
+            this.height=1;
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = new StringBuilder("Node {");
+            sb.append("d=").append(value);
+            if (left != null) {
+                sb.append(", l=").append(left);
+            }
+            if (right != null) {
+                sb.append(", r=").append(right);
+            }
+            sb.append('}');
+            return sb.toString();
+        }
+    }
+
+    public static void main(String[] args) {
+        AVLTree<Integer> a=new AVLTree<>();
+        for (int i=0;i<10;i++){
+            a.add(i);
+            a.print(a.root);
+            System.out.println("\n=============");
+        }
+    }
 }
