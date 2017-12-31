@@ -5,12 +5,33 @@ import java.util.Iterator;
 import java.util.Set;
 
 public class OpenHashTable<E extends OpenHashTableEntity> extends AbstractSet<E> implements Set<E> {
-
+    private static final int INIT_SIZE = 32;
     private int size; //количество элементов в хеш-таблице
     private int tableSize; //размер хещ-таблицы todo: измените на array.length
+    private E[] hashTable;
+    private boolean del[];
 
     public OpenHashTable() {
         //todo
+        size = 0;
+        hashTable =(E[]) new OpenHashTableEntity[INIT_SIZE];
+        del = new boolean[INIT_SIZE];
+    }
+
+    private void resize() {
+        if (2*size < hashTable.length) {
+            return;
+        }
+        E[] tmp = this.hashTable;
+        hashTable =(E[]) new OpenHashTableEntity[2*tmp.length];
+        del = new boolean[2*tmp.length];
+        size = 0;
+        for (int i = 0; i < tmp.length; i++) {
+            E x =  tmp[i];
+            if (x != null) {
+                add(x);
+            }
+        }
     }
 
     /**
@@ -24,7 +45,23 @@ public class OpenHashTable<E extends OpenHashTableEntity> extends AbstractSet<E>
     public boolean add(E value) {
         //todo: следует реализовать
         //Используйте value.hashCode(tableSize, probId) для вычисления хеша
-        return false;
+        int probId=0;
+        int hash = value.hashCode(hashTable.length, probId);
+        if (hashTable[hash] == null) {
+            hashTable[hash] = value;
+        } else {
+            while (hashTable[hash] != null && !value.equals(hashTable[hash]) && !del[hash]) {
+                hash = value.hashCode(hashTable.length, ++probId);
+            }
+            if (value.equals(hashTable[hash])) {
+                return false;
+            }
+            del[hash] = false;
+            hashTable[hash] = value;
+        }
+        size++;
+        resize();
+        return true;
     }
 
     /**
@@ -40,6 +77,29 @@ public class OpenHashTable<E extends OpenHashTableEntity> extends AbstractSet<E>
         E value = (E) object;
         //todo: следует реализовать
         //Используйте value.hashCode(tableSize, probId) для вычисления хеша
+        int probId=0;
+
+        int hash = value.hashCode(hashTable.length, probId);
+
+        if (value.equals(hashTable[hash])) {
+            del[hash] = true;
+            hashTable[hash] = null;
+            size--;
+            return true;
+        }
+
+        while (hashTable[hash] != null && (!value.equals(hashTable[hash]) || del[hash])) {
+            hash = value.hashCode(hashTable.length, ++probId);
+        }
+
+        if (value.equals(hashTable[hash])) {
+            hashTable[hash] = null;
+            del[hash] = true;
+            size--;
+            return true;
+        }
+
+        resize();
         return false;
     }
 
@@ -56,6 +116,17 @@ public class OpenHashTable<E extends OpenHashTableEntity> extends AbstractSet<E>
         E value = (E) object;
         //todo: следует реализовать
         //Используйте value.hashCode(tableSize, probId) для вычисления хеша
+        int probId=0;
+        int hash = value.hashCode(hashTable.length, probId);
+        if (value.equals(hashTable[hash])) {
+            return true;
+        }
+        while (hashTable[hash] != null && !value.equals(hashTable[hash]) || del[hash]) {
+            hash = value.hashCode(hashTable.length, ++probId);
+        }
+        if (hashTable[hash] != null && value.equals(hashTable[hash])) {
+            return true;
+        }
         return false;
     }
 
@@ -65,7 +136,7 @@ public class OpenHashTable<E extends OpenHashTableEntity> extends AbstractSet<E>
     }
 
     public int getTableSize() {
-        return tableSize;
+        return hashTable.length;
     }
 
     @Override

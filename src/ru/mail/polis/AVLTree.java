@@ -5,7 +5,6 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.SortedSet;
-import java.util.function.Function;
 
 
 public class AVLTree<E extends Comparable<E>> extends AbstractSet<E> implements BalancedSortedSet<E> {
@@ -49,50 +48,34 @@ public class AVLTree<E extends Comparable<E>> extends AbstractSet<E> implements 
      */
     @Override
     public boolean add(E value) {
-
-        if (root == null) {
-            root = new Node(value,null);
-            size++;
-            return true;
-        }
-
-        if(contains(value)){
+        try{
+           root=add(root,value);
+        }catch (NodeExistException e){
             return false;
-        } else {
-
-            Node r=root;
-            boolean insert=false;
-            while(!insert) {
-                if (compare(value, r.value) < 0) {
-                    if (r.left == null) {
-                        r.left = new Node(value,r);
-                        insert=true;
-                    } else {
-                        r = r.left;
-                    }
-                } else {
-                    if (r.right == null) {
-                        r.right = new Node(value,r);
-                        insert=true;
-                    } else {
-                        r = r.right;
-                    }
-                }
-            }
-            while (r.parent!=null){
-                r=balance(r);
-                if(r.parent!=null) {
-                    r = r.parent;
-                }
-            }
-            size++;
-            return true;
         }
+        return true;
+    }
+    private Node add(Node curr,E value) throws NodeExistException {
+
+        if (curr == null) {
+            curr = new Node(value);
+            size++;
+            return curr;
+        }
+        if(compare(value,curr.value)==0){
+            throw new NodeExistException();
+        }
+        if (compare(value,curr.value) > 0){
+            curr.right = add(curr.right,value);
+        } else {
+            curr.left = add(curr.left,value);
+        }
+        return balance(curr);
     }
 
     private Node rotateLeft(Node node) {
         Node tmp = node.right;
-        node.right=node.left;
+        node.right=tmp.left;
         tmp.left=node;
         fixHeight(node);
         fixHeight(tmp);
@@ -129,6 +112,20 @@ public class AVLTree<E extends Comparable<E>> extends AbstractSet<E> implements 
         }
         return node;
     }
+
+    private Node findMin(Node r){
+        return r.left!=null? findMin(r.left):r;
+    }
+
+    private Node removeMin(Node curr){
+        if( curr.left==null )
+            return curr.right;
+        curr.left = removeMin(curr.left);
+        return balance(curr);
+    }
+
+
+
     /**
      * Удаляет элемент с таким же значением из дерева.
      * Инвариант: на вход всегда приходит NotNull объект, который имеет корректный тип
@@ -140,79 +137,64 @@ public class AVLTree<E extends Comparable<E>> extends AbstractSet<E> implements 
     public boolean remove(Object object) {
         @SuppressWarnings("unchecked")
         E value = (E) object;
-        Node tmp = root;
-        if(!contains(value)){
+        try{
+            root=remove(root,value);
+            size--;
+        } catch (NodeNotExistException e){
             return false;
         }
-        while (tmp.right.value!=value && tmp.left.value!=value){
-            if(compare(tmp.value,value)<0){
-                tmp=tmp.left;
-            }else {
-                tmp=tmp.right;
-            }
-        }
-        Node left,right;
-        if(compare(tmp.right.value,value)==0) {
-            left = tmp.right.left;
-            right = tmp.right.right;
-        } else  {
-            left = tmp.left.left;
-            right = tmp.left.right;
-        }
-
-        if(right==null){
-            tmp.right=left;
-            size--;
-            balance(tmp);
-            return true;
-        }
-        Node z=right;
-        while (z.left!=null){
-            z=z.left;
-        }
-        z.left=left;
-        tmp.right=right;
-        balance(tmp);
-        size--;
         return true;
     }
 
-    /**
-     * Ищет элемент с таким же значением в дереве.
-     * Инвариант: на вход всегда приходит NotNull объект, который имеет корректный тип
-     *
-     * @param object элемент который необходимо поискать
-     * @return true, если такой элемент содержится в дереве
-     */
+    private Node remove(Node curr, E value) throws NodeNotExistException
+    {
+        if( curr==null ) {
+            throw new NodeNotExistException();
+        }
+        if( compare(value,curr.value) < 0 ) {
+            curr.left = remove(curr.left, value);
+        } else {
+            if( compare(value, curr.value)>0 ) {
+                curr.right = remove(curr.right, value);
+            } else {
+                Node q = curr.left;
+                Node r = curr.right;
+                if( r==null ) return q;
+                Node min = findMin(r);
+                min.right = removeMin(r);
+                min.left = q;
+                return balance(min);
+            }
+        }
+        return balance(curr);
+    }
+        /**
+         * Ищет элемент с таким же значением в дереве.
+         * Инвариант: на вход всегда приходит NotNull объект, который имеет корректный тип
+         *
+         * @param object элемент который необходимо поискать
+         * @return true, если такой элемент содержится в дереве
+         */
     @Override
     public boolean contains(Object object) {
         @SuppressWarnings("unchecked")
         E value = (E) object;
-        if(isEmpty()){
-            return false;
-        }
-        Node tmp=root;
-        while(true){
-            if(compare(value,tmp.value)<0){
-                if(tmp.left!=null) {
-                    tmp = tmp.left;
-                } else {
-                    return false;
-                }
-            }
-            if(compare(value,tmp.value)>0){
-                if(tmp.right!=null) {
+
+        Node tmp = root;
+        while (tmp != null)
+        {
+            if (compare(value, tmp.value)== 0) {
+                return true;
+            } else {
+                if (compare(value, tmp.value) > 0){
                     tmp = tmp.right;
                 } else {
-                    return false;
+                    tmp = tmp.left;
                 }
             }
-            if (compare(value,tmp.value)==0){
-                return true;
-            }
         }
+        return false;
     }
-
     /**
      * Ищет наименьший элемент в дереве
      * @return Возвращает наименьший элемент в дереве
@@ -325,14 +307,13 @@ public class AVLTree<E extends Comparable<E>> extends AbstractSet<E> implements 
         return Math.max(leftHeight, rightHeight) + 1;
     }
 
-    class Node {
+    class Node{
 
         E value;
         Node left;
         Node right;
         int height;
-        Node parent;
-        Node(E value,Node parent) {
+        Node(E value) {
             this.value = value;
             this.right=null;
             this.left=null;
