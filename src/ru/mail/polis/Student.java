@@ -33,21 +33,26 @@ public class Student extends CheckedOpenHashTableEntity {
     private int hashCode2(int tableSize){
         int result = (int) (id%tableSize);
 
-        result =(tableSize  %INIT_SIZE )* result + (photoReference != null ? photoReference.hashCode()%tableSize : 0);
-        result =(tableSize  %INIT_SIZE )* result + lastName.hashCode()%INIT_SIZE;
+        result =(tableSize  %INIT_SIZE)* result + (photoReference != null ? photoReference.hashCode()%tableSize : 0);
+        result =(tableSize  %INIT_SIZE)* result + lastName.hashCode()%INIT_SIZE;
 
-        result =(tableSize  %INIT_SIZE) * result + (email != null ? email.hashCode()%tableSize : 0);
-        result =(tableSize  %INIT_SIZE) * result + (mobile != null ? mobile.hashCode()%tableSize : 0);
+        result =(tableSize  %INIT_SIZE)* result + (email != null ? email.hashCode()%tableSize : 0);
+        result =(tableSize  %INIT_SIZE)* result + (mobile != null ? mobile.hashCode()%tableSize : 0);
 
-        result =(tableSize  %INIT_SIZE) * result + firstName.hashCode()%tableSize;
-        result =(tableSize  %INIT_SIZE )* result + groupId%tableSize;
+        result =(tableSize  %INIT_SIZE)* result + firstName.hashCode()%tableSize;
+        result =(tableSize  %INIT_SIZE)* result + groupId%tableSize;
 
-        result =(tableSize  %INIT_SIZE) * result + birthday.hashCode()%tableSize;
-        result =(tableSize  %INIT_SIZE )* result + yearOfAdmission;
+        result =(tableSize  %INIT_SIZE)* result + birthday.hashCode()%tableSize;
+        result =(tableSize  %INIT_SIZE)* result + yearOfAdmission;
 
-        result =(tableSize %INIT_SIZE )* result + gender.hashCode();
+        result =(tableSize  %INIT_SIZE)* result + gender.hashCode();
 
-        return result % 2 != 0 ? result : result + 1;
+        result= result%(tableSize - 1);
+        if(result%2==0){
+            return result+1;
+        } else {
+            return result;
+        }
     }
 
     public enum  Gender {

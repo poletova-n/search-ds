@@ -10,14 +10,14 @@ import java.util.SortedSet;
 public class RedBlackTree<E extends Comparable<E>> extends AbstractSet<E> implements BalancedSortedSet<E> {
 
     private final Comparator<E> comparator;
-    private Node root; //todo: Создайте новый класс если нужно. Добавьте новые поля, если нужно.
+    private Node root;
     private int size;
-    //todo: добавьте дополнительные переменные и/или методы если нужно
-    private Node<E> emptyNode = new Node<>();
+    private Node nullNode = new Node();
 
     public RedBlackTree() {
         this(null);
     }
+
     public RedBlackTree(Comparator<E> comparator) {
         this.comparator = comparator;
     }
@@ -31,30 +31,32 @@ public class RedBlackTree<E extends Comparable<E>> extends AbstractSet<E> implem
      */
     @Override
     public boolean add(E value) {
-        Node<E> node;
-        Node<E> parent = emptyNode;
-        for (node = root; node != emptyNode && node != null; )
-        {
+        Node parent = nullNode;
+        Node node = root;
+        while (node != nullNode && node != null) {
             parent=node;
-            if (compare(value, node.value) < 0)
+            if (compare(value, node.value) < 0){
                 node = node.left;
-            else if (compare(value, node.value) > 0)
-                node = node.right;
-            else
-                return false;
+            } else {
+                if (compare(value, node.value) > 0) {
+                    node = node.right;
+                } else {
+                    return false;
+                }
+            }
         }
-        node = new Node<>(value, Color.RED);
+        node = new Node(value, Color.RED);
         node.parent = parent;
-        node.left = node.right = emptyNode;
-        if (parent != emptyNode)
+        node.left = node.right = nullNode;
+        if (parent != nullNode)
         {
-            if (compare(value, parent.value) < 0)
+            if (compare(value, parent.value) < 0) {
                 parent.left = node;
-            else
+            } else {
                 parent.right = node;
+            }
 
-        } else
-        {
+        } else {
             root = node;
         }
         balance(node);
@@ -64,57 +66,57 @@ public class RedBlackTree<E extends Comparable<E>> extends AbstractSet<E> implem
 
     private void fixRemove(Node node)
     {
-        Node temp;
+        Node tmp;
         while(node != root && node.color == Color.BLACK) {
             if(node == node.parent.left) {
-                temp = node.parent.right;
+                tmp = node.parent.right;
 
-                if(temp.color == Color.RED) {
-                    temp.color = Color.BLACK;
+                if(tmp.color == Color.RED) {
+                    tmp.color = Color.BLACK;
                     node.parent.color = Color.RED;
                     leftRotate(node.parent);
-                    temp = node.parent.right;
+                    tmp = node.parent.right;
                 }
-                if(temp.left.color == Color.BLACK && temp.right.color == Color.BLACK) {
-                    temp.color = Color.RED;
+                if(tmp.left.color == Color.BLACK && tmp.right.color == Color.BLACK) {
+                    tmp.color = Color.RED;
                     node = node.parent;
                 }
                 else {
-                    if(temp.right.color == Color.BLACK) {
-                        temp.left.color = Color.BLACK;
-                        temp.color = Color.RED;
-                        rightRotate(temp);
-                        temp = node.parent.right;
+                    if(tmp.right.color == Color.BLACK) {
+                        tmp.left.color = Color.BLACK;
+                        tmp.color = Color.RED;
+                        rightRotate(tmp);
+                        tmp = node.parent.right;
                     }
-                    temp.color = node.parent.color;
+                    tmp.color = node.parent.color;
                     node.parent.color = Color.BLACK;
-                    temp.right.color = Color.BLACK;
+                    tmp.right.color = Color.BLACK;
                     leftRotate(node.parent);
                     node = root;
                 }
             }
             else {
-                temp = node.parent.left;
-                if(temp.color == Color.RED) {
-                    temp.color = Color.BLACK;
+                tmp = node.parent.left;
+                if(tmp.color == Color.RED) {
+                    tmp.color = Color.BLACK;
                     node.parent.color = Color.RED;
                     rightRotate(node.parent);
-                    temp = node.parent.left;
+                    tmp = node.parent.left;
                 }
-                if(temp.left.color == Color.BLACK && temp.right.color == Color.BLACK) {
-                    temp.color = Color.RED;
+                if(tmp.left.color == Color.BLACK && tmp.right.color == Color.BLACK) {
+                    tmp.color = Color.RED;
                     node = node.parent;
                 }
                 else {
-                    if( temp.left.color == Color.BLACK) {
-                        temp.right.color = Color.BLACK;
-                        temp.color = Color.RED;;
-                        leftRotate(temp);
-                        temp = node.parent.left;
+                    if( tmp.left.color == Color.BLACK) {
+                        tmp.right.color = Color.BLACK;
+                        tmp.color = Color.RED;;
+                        leftRotate(tmp);
+                        tmp = node.parent.left;
                     }
-                    temp.color = node.parent.color;
+                    tmp.color = node.parent.color;
                     node.parent.color = Color.BLACK;
-                    temp.left.color = Color.BLACK;
+                    tmp.left.color = Color.BLACK;
 
                     rightRotate(node.parent);
                     node = root;
@@ -135,43 +137,52 @@ public class RedBlackTree<E extends Comparable<E>> extends AbstractSet<E> implem
     public boolean remove(Object object) {
         @SuppressWarnings("unchecked")
         E value = (E) object;
-        Node<E> curr = root;
-        while ( curr != emptyNode && curr != null)
+        Node curr = root;
+        while ( curr != nullNode && curr != null)
         {
-            if (compare(value, curr.value) < 0)
-                curr = curr.left; else
-            if (compare(value, curr.value) > 0)
-                curr = curr.right; else
-            if (compare(value, curr.value) == 0)
-                break;
+            if (compare(value, curr.value) < 0) {
+                curr = curr.left;
+            } else {
+                if (compare(value, curr.value) > 0)
+                    curr = curr.right;
+                else if (compare(value, curr.value) == 0)
+                    break;
+            }
         }
-        if (curr != emptyNode && compare(value, curr.value) == 0) {
-            Node temp = emptyNode, successor = emptyNode;
-            if (curr == null || curr == emptyNode)
+        if (curr != nullNode && curr!=null && compare(value, curr.value) == 0) {
+            Node tmp;
+            Node successor;
+            if (curr == nullNode) {
                 return false;
-            if (curr.isLeftFree() || curr.isRightFree())
+            }
+            if (!curr.hasLeft() || !curr.hasRight()) {
                 successor = curr;
-            else
-                successor = curr.getSuccessor();
+            } else {
+                successor = curr.getSuccess();
+            }
 
-            if (!successor.isLeftFree())
-                temp = successor.left;
-            else
-                temp = successor.right;
+            if (successor.hasLeft()) {
+                tmp = successor.left;
+            } else {
+                tmp = successor.right;
+            }
 
-            temp.parent = successor.parent;
-            if (successor.isParentFree())
-                root = temp;
-            else if (successor == successor.parent.left)
-                successor.parent.left = temp;
-            else
-                successor.parent.right = temp;
-            if (successor != curr)
+            tmp.parent = successor.parent;
+            if (!successor.hasParent()) {
+                root = tmp;
+            } else {
+                if (successor == successor.parent.left) {
+                    successor.parent.left = tmp;
+                } else {
+                    successor.parent.right = tmp;
+                }
+            }
+            if (successor != curr) {
                 curr.value = (E) successor.value;
+            }
 
-            if (successor.color == Color.BLACK)
-            {
-                fixRemove(temp);
+            if (successor.color == Color.BLACK) {
+                fixRemove(tmp);
             }
             size--;
             return true;
@@ -192,15 +203,16 @@ public class RedBlackTree<E extends Comparable<E>> extends AbstractSet<E> implem
     public boolean contains(Object object) {
         @SuppressWarnings("unchecked")
         E value = (E) object;
-        Node<E> curr = root;
-        while (curr != emptyNode && curr != null)
-        {
-            if (compare(curr.value, value)== 0)
+        Node curr = root;
+        while (curr != nullNode && curr != null) {
+            if (compare(curr.value, value)== 0) {
                 return true;
-            if (compare(value, curr.value) < 0)
+            }
+            if (compare(value, curr.value) < 0) {
                 curr = curr.left;
-            else
+            } else {
                 curr = curr.right;
+            }
         }
         return false;
     }
@@ -212,15 +224,14 @@ public class RedBlackTree<E extends Comparable<E>> extends AbstractSet<E> implem
      */
     @Override
     public E first() {
-        if (root == null || root == emptyNode) {
+        if (root == null || root == nullNode) {
             throw new NoSuchElementException("first");
         }
         Node curr = root;
-        while (!curr.isLeftFree())
-        {
+        while (curr.hasLeft()){
             curr = curr.left;
         }
-        return (E) curr.value;
+        return curr.value;
     }
 
     /**
@@ -230,15 +241,14 @@ public class RedBlackTree<E extends Comparable<E>> extends AbstractSet<E> implem
      */
     @Override
     public E last() {
-        if (root == null || root == emptyNode) {
+        if (root == null || root == nullNode) {
             throw new NoSuchElementException("first");
         }
         Node curr = root;
-        while (!curr.isRightFree())
-        {
+        while (curr.hasRight()) {
             curr = curr.right;
         }
-        return (E) curr.value;
+        return  curr.value;
     }
 
     private int compare(E v1, E v2) {
@@ -302,18 +312,18 @@ public class RedBlackTree<E extends Comparable<E>> extends AbstractSet<E> implem
         }
     }
 
-    private Node leftRotate(Node<E> node)
+    private Node leftRotate(Node node)
     {
         Node right = node.right;
         node.right = right.left;
 
-        if (right.left != emptyNode)
+        if (right.left != nullNode)
             right.left.parent = node;
 
-        if (right != emptyNode)
+        if (right != nullNode)
             right.parent = node.parent;
 
-        if (node.parent != emptyNode)
+        if (node.parent != nullNode)
         {
             if (node == node.parent.left)
                 node.parent.left = right;
@@ -323,21 +333,21 @@ public class RedBlackTree<E extends Comparable<E>> extends AbstractSet<E> implem
         } else
             root = right;
         right.left = node;
-        if (node != emptyNode)
+        if (node != nullNode)
             node.parent = right;
         return root;
     }
 
 
-    private Node rightRotate(Node<E> node)
+    private Node rightRotate(Node node)
     {
         Node left = node.left;
         node.left = left.right;
-        if (left.right != emptyNode)
+        if (left.right != nullNode)
             left.right.parent = node;
-        if (left != emptyNode)
+        if (left != nullNode)
             left.parent = node.parent;
-        if (node.parent != emptyNode)
+        if (node.parent != nullNode)
         {
             if (node == node.parent.right)
                 node.parent.right = left;
@@ -347,26 +357,9 @@ public class RedBlackTree<E extends Comparable<E>> extends AbstractSet<E> implem
         } else
             root = left;
         left.right = node;
-        if (node != emptyNode)
+        if (node != nullNode)
             node.parent = left;
         return root;
-    }
-
-    public void preOrder(){
-        preOrder(root);
-    }
-
-    private void preOrder(Node v)
-    {
-        if (v == emptyNode || v == null) {
-            System.out.println("emptyNode ");
-        } else
-        {
-            System.out.println(v.value + " ");
-            preOrder(v.left);
-            preOrder(v.right);
-        }
-
     }
 
     private void balance(Node node)
@@ -424,7 +417,7 @@ public class RedBlackTree<E extends Comparable<E>> extends AbstractSet<E> implem
         int leftBlackHeight = traverseTreeAndCheckBalanced(node.left);
         int rightBlackHeight = traverseTreeAndCheckBalanced(node.right);
         if (leftBlackHeight != rightBlackHeight) {
-            throw NotBalancedTreeException.create("Black height must be equal.", leftBlackHeight, rightBlackHeight, node.toString());
+            throw NotBalancedTreeException.create("Not balanced", leftBlackHeight, rightBlackHeight, node.toString());
         }
         if (node.color == Color.RED) {
             checkRedNodeRule(node);
@@ -446,14 +439,17 @@ public class RedBlackTree<E extends Comparable<E>> extends AbstractSet<E> implem
         RED, BLACK
     }
 
-    public class Node<E> {
+    public class Node {
         E value;
-        Node<E> left;
-        Node<E> right;
-        Node<E> parent;
-        Color color = Color.BLACK;
+        Node left;
+        Node right;
+        Node parent;
+        Color color;
 
-        public Node(){}
+        public Node(){
+            this.value = null;
+            this.color = Color.BLACK;
+        }
         public Node(E value, Color color)
         {
             this.value = value;
@@ -461,38 +457,34 @@ public class RedBlackTree<E extends Comparable<E>> extends AbstractSet<E> implem
         }
 
 
-        public boolean isFree() {
-            return value == null || value == emptyNode;
+        public boolean hasLeft() {
+            return left != null && left != nullNode;
         }
 
-        public boolean isLeftFree() {
-            return left == null || left == emptyNode;
+        public boolean hasRight() {
+            return right != null && right != nullNode;
         }
 
-        public boolean isRightFree() {
-            return right == null || right == emptyNode;
+        public boolean hasParent() {
+            return parent != null && parent != nullNode;
         }
 
-        public boolean isParentFree() {
-            return parent == null || parent == emptyNode;
-        }
-
-        public Node getSuccessor()
+        public Node getSuccess()
         {
-            Node temp = null;
+            Node tmp;
             Node node = this;
-            if(!node.isRightFree()) {
-                temp = node.right;
-                while(!temp.isLeftFree())
-                    temp = temp.left;
-                return temp;
+            if(node.hasRight()) {
+                tmp = node.right;
+                while(tmp.hasLeft())
+                    tmp = tmp.left;
+                return tmp;
             }
-            temp = node.parent;
-            while(temp != emptyNode && node == temp.right) {
-                node = temp;
-                temp = temp.parent;
+            tmp = node.parent;
+            while(tmp != nullNode && node == tmp.right) {
+                node = tmp;
+                tmp = tmp.parent;
             }
-            return temp;
+            return tmp;
         }
 
         @Override

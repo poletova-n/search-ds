@@ -88,7 +88,7 @@ public class OpenHashTable<E extends OpenHashTableEntity> extends AbstractSet<E>
             return true;
         }
 
-        while (hashTable[hash] != null && (!value.equals(hashTable[hash]) || del[hash])) {
+        while ((hashTable[hash] != null && !value.equals(hashTable[hash])) || del[hash]) {
             hash = value.hashCode(hashTable.length, ++probId);
         }
 
